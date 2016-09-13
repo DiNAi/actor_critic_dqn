@@ -74,8 +74,7 @@ class PolicyGradientREINFORCE(object):
             histogram_summary = tf.histogram_summary(var.name + "/gradient", grad)
             self.histogram_summaries.append(histogram_summary)
     self.entropy_summary = tf.scalar_summary("entropy", self.entropy)
-    #self.episode_len = tf.scalar_summary("episode_len",)
-
+    
   def merge_summaries(self):
     self.summarize = tf.merge_summary([self.loss_summary + self.entropy_summary]
                                       + self.histogram_summaries)

@@ -10,7 +10,7 @@ env = gym.make("CartPole-v0")
 sess = tf.Session()
 state_dim = 4
 num_actions = 2
-optimizer = tf.train.RMSPropOptimizer(learning_rate=0.5)
+optimizer = tf.train.AdamOptimizer(learning_rate=0.01)
 writer = tf.train.SummaryWriter("/home/drl/DRL/tensorflow-reinforce/tmp/")
 
 def show_image(array):
@@ -21,7 +21,7 @@ def show_image(array):
     plt.show()
 
 def policy_network(states):
-   # define policy neural network
+   """ define policy neural network """
    W1 = tf.get_variable("W1", [state_dim, 20],
                         initializer=tf.random_normal_initializer())
    b1 = tf.get_variable("b1", [20],
