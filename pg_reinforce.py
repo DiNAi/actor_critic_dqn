@@ -10,6 +10,7 @@ class PolicyGradientREINFORCE(object):
                      state_dim,
                      reg_param=0.001,      # regularization constants
                      max_gradient=5,       # max gradient norms
+                     entropy_bonus=1,
                      summary_writer=None,
                      summary_every=100):
 
@@ -25,6 +26,7 @@ class PolicyGradientREINFORCE(object):
     # training parameters
     self.max_gradient    = max_gradient
     self.reg_param       = reg_param
+    self.entropy_bonus   = entropy_bonus
 
     #counter
     self.train_itr = 0
@@ -63,6 +65,7 @@ class PolicyGradientREINFORCE(object):
       self.cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(self.unnormalized_log_probs,
                                                                           self.actions)
       self.loss = tf.reduce_mean(tf.mul(self.cross_entropy, self.returns))
+      self.loss -= self.entropy_bonus * self.entropy
       self.gradients = self.optimizer.compute_gradients(self.loss)
       self.train_op = self.optimizer.apply_gradients(self.gradients)
 
@@ -74,7 +77,7 @@ class PolicyGradientREINFORCE(object):
             histogram_summary = tf.histogram_summary(var.name + "/gradient", grad)
             self.histogram_summaries.append(histogram_summary)
     self.entropy_summary = tf.scalar_summary("entropy", self.entropy)
-    
+
   def merge_summaries(self):
     self.summarize = tf.merge_summary([self.loss_summary + self.entropy_summary]
                                       + self.histogram_summaries)

@@ -27,7 +27,6 @@ class Sampler(object):
         for t in xrange(self.max_step):
             action = self.policy.sampleAction(state[np.newaxis,:])
             next_state, reward, done, _ = self.env.step(action)
-            reward = -10 if done else 0.1 # normalize reward
             # appending the experience
             states.append(state)
             actions.append(action)

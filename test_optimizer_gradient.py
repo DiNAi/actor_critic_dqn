@@ -4,7 +4,7 @@ import numpy as np
 def get_name(tensors):
     return "\n".join([t.name for t in tensors])
 
-optimizer = tf.train.AdamOptimizer(learning_rate=1)
+optimizer = tf.train.GradientDescentOptimizer(learning_rate=1)
 session = tf.Session()
 
 x = tf.placeholder(tf.float32, (None, 2), "x")

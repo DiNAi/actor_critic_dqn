@@ -3,14 +3,13 @@ import numpy as np
 import tensorflow as tf
 
 class DQNAgent(object):
-
     def __init__(self, session,
                        optimizer,
                        q_network,
                        state_dim,
                        num_actions,
                        discount=0.9,
-                       target_update_rate=0.01,
+                       target_update_rate=1,
                        summary_writer=None,
                        summary_every=100):
 
@@ -25,7 +24,7 @@ class DQNAgent(object):
         # Q learning parameters
         self.state_dim          = state_dim
         self.num_actions        = num_actions
-        self.discount    = discount
+        self.discount           = discount
         self.target_update_rate = target_update_rate
 
         # counters
@@ -42,7 +41,6 @@ class DQNAgent(object):
         if self.summary_writer is not None:
             self.summary_writer.add_graph(self.session.graph)
             self.summary_every = summary_every
-
 
     def create_input_placeholders(self):
         with tf.name_scope("inputs"):
@@ -62,11 +60,13 @@ class DQNAgent(object):
 
     def create_variables_for_target(self):
         with tf.name_scope("target_values"):
+            not_the_end_of_an_episode = 1.0 - tf.cast(self.dones, tf.float32)
             with tf.variable_scope("target_network"):
-                self.target_q_values = self.q_network(self.states)
+                self.target_q_values = self.q_network(self.next_states)
             self.averaged_target_q_values = tf.reduce_sum(tf.mul(self.target_q_values,
                                                               self.next_action_probs),
                                                         reduction_indices=1)
+            self.averaged_target_q_values = tf.mul(self.averaged_target_q_values, not_the_end_of_an_episode)
             self.target_values = self.rewards + self.discount * self.averaged_target_q_values
 
     def create_variables_for_optimization(self):
@@ -93,10 +93,15 @@ class DQNAgent(object):
             if grad is not None:
                 histogram_summary = tf.histogram_summary(var.name + "/gradient", grad)
                 self.histogram_summaries.append(histogram_summary)
-        self.q_summary = tf.histogram_summary("q_summary", self.q_values)
+        self.q_summaries = []
+        for i in range(self.num_actions):
+            self.q_summary = tf.histogram_summary("q_summary" + "/action_" + str(i), self.q_values[:, i])
+            self.q_summaries.append(self.q_summary)
+
 
     def merge_summaries(self):
-        self.summarize = tf.merge_summary([self.loss_summary + self.q_summary]
+        self.summarize = tf.merge_summary([self.loss_summary]
+                                           + self.q_summaries
                                            + self.histogram_summaries)
 
     def create_variables(self):

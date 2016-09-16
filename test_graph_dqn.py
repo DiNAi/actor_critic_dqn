@@ -13,7 +13,7 @@ class FixedPolicy(object):
 
     def sampleAction(self, state):
         # Always return action "0"
-        return 0
+        return np.random.choice([0, 1])
 
 def q_network(states):
     W1 = tf.get_variable("W1", [state_dim, 20],
@@ -31,7 +31,7 @@ def q_network(states):
 session = tf.Session()
 state_dim = env.observation_space.shape[0]
 num_actions = env.action_space.n
-optimizer = tf.train.AdamOptimizer(learning_rate=0.01)
+optimizer = tf.train.AdamOptimizer(learning_rate=0.0001)
 writer = tf.train.SummaryWriter("/home/drl/DRL/tensorflow-reinforce/tmp/")
 
 fixed_policy = FixedPolicy()
@@ -43,7 +43,7 @@ def action_masker(array):
     return masked_action
 
 def probs_for_next_action(array):
-    return np.column_stack((np.ones_like(array), np.zeros_like(array)))
+    return np.column_stack((0.5 * np.ones_like(array), 0.5 * np.ones_like(array)))
 
 dqn_agent = DQNAgent(session,
                      optimizer,
@@ -52,7 +52,7 @@ dqn_agent = DQNAgent(session,
                      num_actions,
                      summary_writer=writer)
 
-for _ in trange(2000):
+for _ in trange(8000):
     batch = sampler.collect_one_batch()
     masked_action = action_masker(batch["actions"])
     next_action_probs = probs_for_next_action(batch["rewards"])
