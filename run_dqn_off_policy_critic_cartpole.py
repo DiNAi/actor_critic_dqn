@@ -15,7 +15,7 @@ state_dim   = env.observation_space.shape[0]
 num_actions = env.action_space.n
 
 # Policy nework parameters
-entropy_bonus = 0.0
+entropy_bonus = 0.5
 policy_session = tf.Session()
 policy_optimizer = tf.train.AdamOptimizer(learning_rate=0.001)
 policy_writer = tf.train.SummaryWriter("/home/drl/DRL/tensorflow-reinforce/tmp/policy/")
@@ -51,7 +51,16 @@ pg_reinforce = PolicyGradientREINFORCE(policy_session,
                                        summary_every=policy_summary_every)
 
 # Initializing Sampler
-sampler = Sampler(pg_reinforce, env)
+class FixedPolicy(object):
+    def __init__(self):
+        pass
+
+    def sampleAction(self, state):
+        # Always return action "0"
+        return np.random.choice([0, 1])
+
+fixed_policy = FixedPolicy()
+sampler = Sampler(fixed_policy, env)
 
 # Q-network parameters
 q_session = tf.Session()
@@ -109,8 +118,14 @@ def update_q_parameters(batch):
 def compute_return(batch):
     return dqn_agent.compute_q_values(batch["states"], batch["actions"])
 
+def record_progress():
+    batch_size = 5
+    sampler = Sampler(pg_reinforce, env, batch_size=batch_size)
+    batch = sampler.collect_one_batch()
+    return (batch["rewards"].sum()) / batch_size
+
 reward = []
-for _ in trange(1000):
+for _ in trange(10000):
     batch = sampler.collect_one_batch()
     actions = batch["actions"]
     update_batch(batch)
@@ -119,8 +134,8 @@ for _ in trange(1000):
         random_batch = replay_buffer.sample_batch(sample_size)
         update_random_batch(random_batch)
         update_q_parameters(random_batch)
-        returns = compute_return(batch)
+        returns = 2 * compute_return(batch) # off-policy correction terms
         pg_reinforce.update_parameters(batch["states"], actions, returns)
-        reward.append(batch["rewards"].sum()/200)
+        reward.append(record_progress())
 
 show_image(reward)

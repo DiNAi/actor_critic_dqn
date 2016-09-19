@@ -2,7 +2,7 @@ import random
 import numpy as np
 import tensorflow as tf
 
-class PolicyGradientREINFORCE(object):
+class DPG(object):
 
   def __init__(self, session,
                      optimizer,
@@ -10,7 +10,6 @@ class PolicyGradientREINFORCE(object):
                      state_dim,
                      reg_param=0.001,      # regularization constants
                      max_gradient=5,       # max gradient norms
-                     entropy_bonus=1,
                      summary_writer=None,
                      summary_every=100):
 
