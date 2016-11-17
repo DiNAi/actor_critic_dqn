@@ -124,6 +124,9 @@ class DQNAgent(object):
         return self.session.run(self.action_scores, {self.states: states,
                                                      self.actions: actions})
 
+    def compute_all_q_values(self, states):
+        return self.session.run(self.q_values, {self.states: states})
+
     def update_parameters(self, batch):
         write_summary = self.train_itr % self.summary_every == 0
         _, summary = self.session.run([self.train_op,

@@ -6,12 +6,14 @@ class Sampler(object):
                  env,
                  batch_size=200,
                  max_step=200,
-                 discount=0.99):
+                 discount=0.99,
+                 use_doubly_robust=False):
         self.policy = policy
         self.env = env
         self.batch_size = batch_size
         self.max_step = max_step
         self.discount = discount
+        self.use_doubly_robust = use_doubly_robust
 
     def compute_monte_carlo_returns(self, rewards):
         return_so_far = 0
@@ -46,7 +48,6 @@ class Sampler(object):
                     dones = dones
                     )
 
-
     def collect_one_batch(self):
         episodes = []
         for i_batch in xrange(self.batch_size):
@@ -58,7 +59,7 @@ class Sampler(object):
         monte_carlo_returns = np.concatenate([episode["monte_carlo_returns"] for episode in episodes])
         next_states = np.concatenate([episode["next_states"] for episode in episodes])
         dones = np.concatenate([episode["dones"] for episode in episodes])
-        return dict(
+        batch = dict(
                     states = states,
                     actions = actions,
                     rewards = rewards,
@@ -66,6 +67,10 @@ class Sampler(object):
                     next_states = next_states,
                     dones = dones
                     )
+        if self.use_doubly_robust:
+            return episodes, batch
+        else:
+            return batch
 
     def samples(self):
         return self.collect_one_batch()
